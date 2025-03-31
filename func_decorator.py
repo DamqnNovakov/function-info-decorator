@@ -1,10 +1,7 @@
 import time
 import sys
+import inspect
 from typing import Callable, Any, Dict
-import random
-
-
-
 
 class FunctionInfo:
     def size_of_value(self, value):
@@ -42,7 +39,38 @@ class FunctionInfo:
 
         return message
 
+    def check_return_type(self, func):
+        signiture = inspect.signature(func)
+        return_type = signiture.return_annotation
+
+        if return_type is not inspect.Signature.empty:
+            return f"Return type is annotated as: {return_type}"
+        else: 
+            return "Return type is not annotated."
+        
+    def check_parameter_type(self, func):
+        signiture = inspect.signature(func)
+        parameters = signiture.parameters
+
+        parameters_types = []
+        for param in parameters.values():
+            
+            if param.annotation is not inspect.Parameter.empty:
+                param_type = f'{param.name} has a set type of {param.annotation}'
+                parameters_types.append(param_type) 
+            else:
+                parameters_types.append(f"Parameter: {param.name} has no type annotation")
+
+        if not parameters_types:
+            return 'No parameters have set type notation'
+        
+        return parameters_types            
+                
+            
     def my_decorator(self, func: Callable[..., Dict[str, Any]]) -> Callable[..., Any]:
+        return_type = self.check_return_type(func)
+        parameters_types = self.check_parameter_type(func)
+
         def wrapper(*args, **kwargs):
             start_time = time.time()
             result = func(*args, **kwargs)
@@ -62,7 +90,7 @@ class FunctionInfo:
                 messages.append(self.check_size_based_on_value_type(value))
 
             print("=" * 50)  # Add a separator for neatness
-            print(f'Function Name(args_number)    : {func.__name__}({num_of_arguments})')
+            print(f'Function Name(args_number): {func.__name__}({num_of_arguments})')
             print("-" * 50)
             print("Function Arguments:")
             print(f"    1. Positional arguments {len(args)} args: {args}")
@@ -73,8 +101,12 @@ class FunctionInfo:
             print("Argument Sizes:")
             print("\n".join(messages))  # Print all messages
             print("-" * 50)
-            print(f'Execution Time   : {execution_time:.8f} seconds')
+            print(f'Execution Time: {execution_time:.8f} seconds')
             print("-" * 50)
+            print(f"Function expects: {return_type}")
+            print("=" * 50)
+            print(f"Function expects parameters type:{parameters_types}")
+
             
 
             return result
@@ -85,10 +117,12 @@ class FunctionInfo:
 dec = FunctionInfo()
 
 @dec.my_decorator
-def func_exp():
+def func_exp(a, b, name):
     print('Hello World')
+    print(name)
+    return a + b
 
-func_exp()
+func_exp(3, 3.12, 'Damqn')
     
 
 
